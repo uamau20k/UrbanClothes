@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UrbanClothes | Moda Femenina</title>
+    
+    <!-- Tailwind CSS para estilos rápidos y responsivos -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Iconos Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        rose: {
+                            50: '#fff1f2',
+                            100: '#ffe4e6',
+                            200: '#fecdd3',
+                            300: '#fda4af',
+                            400: '#fb7185',
+                            500: '#f43f5e', // Color principal
+                            600: '#e11d48',
+                            800: '#9f1239',
+                        },
+                        gold: '#d4af37',
+                    },
+                    fontFamily: {
+                        serif: ['"Playfair Display"', 'serif'],
+                        sans: ['"Lato"', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Estilos personalizados y animaciones */
+        body {
+            font-family: 'Lato', sans-serif;
+            background-color: #fff1f2; /* Rose 50 */
+        }
+        
+        h1, h2, h3, h4, .brand-font {
+            font-family: 'Playfair Display', serif;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Ocultar barra de desplazamiento en elementos scrollables pero permitir scroll */
+        .hide-scroll::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scroll {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #f43f5e;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="text-slate-700 antialiased flex flex-col min-h-screen">
+
+    <!-- Notificaciones (Toast) -->
+    <div id="notification-container" class="fixed top-20 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- Navegación -->
+    <nav class="bg-white shadow-sm sticky top-0 z-40 transition-all duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-20">
+                <!-- Logo -->
+                <div class="flex-shrink-0 cursor-pointer" onclick="router('home')">
+                    <span class="brand-font text-3xl font-bold text-rose-600 tracking-wider">Urban</span>
+                    <span class="text-xs text-slate-400 uppercase tracking-widest ml-1">Clothes</span>
+                </div>
+
+                <!-- Desktop Menu -->
+                <div class="hidden md:flex space-x-8 items-center">
+                    <button onclick="router('home')" class="text-slate-600 hover:text-rose-500 font-medium transition">Inicio</button>
+                    <button onclick="router('shop')" class="text-slate-600 hover:text-rose-500 font-medium transition">Colección</button>
+                    <button onclick="router('about')" class="text-slate-600 hover:text-rose-500 font-medium transition">Nosotros</button>
+                </div>
+
+                <!-- Icons -->
+                <div class="flex items-center space-x-6">
+                    <!-- Cart Icon -->
+                    <div class="relative cursor-pointer hover:text-rose-500 transition" onclick="toggleCart()">
+                        <i data-lucide="shopping-bag" class="w-6 h-6"></i>
+                        <span id="cart-count" class="absolute -top-2 -right-2 bg-rose-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center transform scale-0 transition-transform duration-200">0</span>
+                    </div>
+                    
+                    <!-- User Icon / Auth -->
+                    <div id="auth-section" class="relative">
+                        <!-- Se llenará con JS dependiendo del estado de sesión -->
+                    </div>
+                    
+                    <!-- Mobile Menu Button -->
+                    <div class="md:hidden flex items-center">
+                        <button onclick="toggleMobileMenu()" class="text-slate-600">
+                            <i data-lucide="menu" class="w-6 h-6"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Mobile Menu Panel -->
+        <div id="mobile-menu" class="hidden md:hidden bg-white border-t border-gray-100 p-4 absolute w-full shadow-lg">
+            <button onclick="router('home')" class="block w-full text-left py-2 text-slate-600">Inicio</button>
+            <button onclick="router('shop')" class="block w-full text-left py-2 text-slate-600">Colección</button>
+            <button onclick="router('profile')" class="block w-full text-left py-2 text-slate-600 auth-required hidden">Mi Perfil</button>
+        </div>
+    </nav>
+
+    <!-- Contenido Principal -->
+    <main id="app-content" class="flex-grow w-full">
+        <!-- El contenido se inyectará aquí dinámicamente -->
+    </main>
+
+    <!-- Sidebar del Carrito -->
+    <div id="cart-sidebar" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-black bg-opacity-40 transition-opacity" onclick="toggleCart()"></div>
+        <div class="absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-2xl transform transition-transform duration-300 translate-x-full flex flex-col" id="cart-panel">
+            <div class="p-5 border-b flex justify-between items-center bg-rose-50">
+                <h2 class="text-xl font-serif font-bold text-rose-800">Tu Bolsa de Compras</h2>
+                <button onclick="toggleCart()" class="text-slate-400 hover:text-rose-600">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            
+            <div id="cart-items" class="flex-1 overflow-y-auto p-5 space-y-4">
+                <!-- Items del carrito -->
+                <div class="text-center text-slate-400 mt-10">
+                    <i data-lucide="shopping-bag" class="w-16 h-16 mx-auto mb-4 opacity-50"></i>
+                    <p>Tu bolsa está vacía.</p>
+                    <button onclick="toggleCart(); router('shop')" class="mt-4 text-rose-500 font-bold underline">Ir a comprar</button>
+                </div>
+            </div>
+
+            <div class="p-5 border-t bg-gray-50">
+                <div class="flex justify-between mb-4 text-lg font-bold text-slate-800">
+                    <span>Total</span>
+                    <span id="cart-total">$0.00</span>
+                </div>
+                <button onclick="checkout()" class="w-full bg-slate-900 text-white py-4 rounded-lg font-bold hover:bg-rose-600 transition shadow-lg flex justify-center items-center gap-2">
+                    <span>Proceder al Pago</span>
+                    <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 text-white pt-12 pb-8 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+                <div>
+                    <span class="brand-font text-2xl font-bold text-rose-400">UrbanClothes</span>
+                    <p class="mt-4 text-slate-400 text-sm">Moda exclusiva pensada para resaltar tu belleza natural. Diseños contemporáneos con un toque clásico.</p>
+                </div>
+                <div>
+                    <h4 class="font-bold text-lg mb-4">Ayuda</h4>
+                    <ul class="space-y-2 text-slate-400 text-sm">
+                        <li><a href="#" class="hover:text-rose-400">Envíos y Devoluciones</a></li>
+                        <li><a href="#" class="hover:text-rose-400">Guía de Tallas</a></li>
+                        <li><a href="#" class="hover:text-rose-400">Preguntas Frecuentes</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-bold text-lg mb-4">Síguenos</h4>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-slate-400 hover:text-rose-400"><i data-lucide="instagram"></i></a>
+                        <a href="#" class="text-slate-400 hover:text-rose-400"><i data-lucide="facebook"></i></a>
+                        <a href="#" class="text-slate-400 hover:text-rose-400"><i data-lucide="twitter"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-slate-800 pt-8 text-center text-slate-500 text-xs">
+                &copy; 2023 UrbanClothes. Todos los derechos reservados.
+            </div>
+        </div>
+    </footer>
+
+    <!-- LÓGICA DE JAVASCRIPT -->
+    <script>
+        // --- BASE DE DATOS MOCK ---
+        const products = [
+            { id: 1, name: "Vestido Floral Primavera", price: 45000, category: "Vestidos", image: "https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80" },
+            { id: 2, name: "Blusa de Seda Rosa", price: 28990, category: "Blusas", image: "https://images.unsplash.com/photo-1564257631407-4deb1f99d992?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80" },
+            { id: 3, name: "Falda Plisada Midi", price: 32500, category: "Faldas", image: "https://images.unsplash.com/photo-1583496661160-fb5886a0aaaa?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80" },
+            { id: 4, name: "Jeans Skinny Alto", price: 38000, category: "Pantalones", image: "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80" },
+            { id: 5, name: "Chaqueta Denim Oversized", price: 55000, category: "Abrigos", image: "https://soviet.cl/267935-large_default/chaqueta-denim-strass-mujer-soviet.jpg" },
+            { id: 6, name: "Suéter Tejido Beige", price: 42000, category: "Tejidos", image: "https://images.unsplash.com/photo-1576566588028-4147f3842f27?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80" },
+            { id: 7, name: "Tacones Nude Clásicos", price: 48000, category: "Calzado", image: "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80" },
+            { id: 8, name: "Bolso de Mano Elegante", price: 35990, category: "Accesorios", image: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80" },
+        ];
+
+        // --- ESTADO DE LA APP ---
+        let state = {
+            cart: [],
+            user: null, // { name, email, avatar }
+            currentView: 'home'
+        };
+
+        // --- INICIALIZACIÓN ---
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            router('home');
+            updateAuthUI();
+        });
+
+        // --- SISTEMA DE ENRUTAMIENTO SIMPLE ---
+        function router(view) {
+            state.currentView = view;
+            const content = document.getElementById('app-content');
+            window.scrollTo(0, 0);
+
+            // Cerrar menú móvil si está abierto
+            document.getElementById('mobile-menu').classList.add('hidden');
+
+            switch(view) {
+                case 'home':
+                    content.innerHTML = renderHome();
+                    break;
+                case 'shop':
+                    content.innerHTML = renderShop();
+                    break;
+                case 'login':
+                    content.innerHTML = renderLogin();
+                    break;
+                case 'register':
+                    content.innerHTML = renderRegister();
+                    break;
+                case 'profile':
+                    if(!state.user) { router('login'); return; }
+                    content.innerHTML = renderProfile();
+                    break;
+                case 'checkout':
+                    content.innerHTML = renderCheckout();
+                    break;
+                case 'about':
+                    content.innerHTML = renderAbout();
+                    break;
+                default:
+                    content.innerHTML = renderHome();
+            }
+            lucide.createIcons();
+        }
+
+        // --- VISTAS (Templates HTML) ---
+
+        function renderHome() {
+            return `
+                <div class="fade-in">
+                    <!-- Hero Section -->
+                    <div class="relative h-[600px] w-full overflow-hidden">
+                        <!-- Imagen de fondo corregida usando etiqueta img -->
+                        <img 
+                            src="https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=2070&auto=format&fit=crop" 
+                            alt="Mujer comprando moda elegante" 
+                            class="absolute inset-0 w-full h-full object-cover"
+                            onerror="this.src='https://placehold.co/1920x600/ffe4e6/9f1239?text=Urban+Clothes'"
+                        >
+                        
+                        <div class="absolute inset-0 bg-black bg-opacity-30"></div>
+                        <div class="absolute inset-0 flex flex-col justify-center items-center text-center text-white px-4 z-10">
+                            <h1 class="text-5xl md:text-7xl font-bold mb-4 drop-shadow-lg">Elegancia Natural</h1>
+                            <p class="text-xl md:text-2xl mb-8 font-light tracking-wide">Descubre la nueva colección de temporada</p>
+                            <button onclick="router('shop')" class="bg-rose-500 hover:bg-rose-600 text-white font-bold py-3 px-8 rounded-full transition transform hover:scale-105 shadow-lg">
+                                Ver Colección
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Categorías Destacadas -->
+                    <div class="max-w-7xl mx-auto px-4 py-16">
+                        <h2 class="text-3xl text-center font-bold text-slate-800 mb-12">Categorías Favoritas</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                            <div class="relative group cursor-pointer overflow-hidden rounded-xl shadow-lg h-80" onclick="router('shop')">
+                                <img 
+                                    src="https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80" 
+                                    class="w-full h-full object-cover transition duration-500 group-hover:scale-110"
+                                    alt="Vestidos"
+                                    onerror="this.src='https://placehold.co/600x800/ffe4e6/9f1239?text=Vestidos'"
+                                >
+                                <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-70"></div>
+                                <div class="absolute bottom-6 left-6 text-white">
+                                    <h3 class="text-2xl font-serif">Vestidos</h3>
+                                    <p class="text-sm text-rose-200">Ver más <i data-lucide="arrow-right" class="inline w-4 h-4"></i></p>
+                                </div>
+                            </div>
+                            <div class="relative group cursor-pointer overflow-hidden rounded-xl shadow-lg h-80" onclick="router('shop')">
+                                <img 
+                                src="https://weide.cl/cdn/shop/files/GH63-VERDE-_5.jpg?v=1764906043&width=1100" 
+                                    class="w-full h-full object-cover transition duration-500 group-hover:scale-110"
+                                    alt="Calzado"
+                                    onerror="this.src='https://placehold.co/600x800/ffe4e6/9f1239?text=Calzado'"
+                                >
+                                <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-70"></div>
+                                <div class="absolute bottom-6 left-6 text-white">
+                                    <h3 class="text-2xl font-serif">Calzado</h3>
+                                    <p class="text-sm text-rose-200">Ver más <i data-lucide="arrow-right" class="inline w-4 h-4"></i></p>
+                                </div>
+                            </div>
+                            <div class="relative group cursor-pointer overflow-hidden rounded-xl shadow-lg h-80" onclick="router('shop')">
+                                <img 
+                                    src="https://i.pinimg.com/564x/28/ed/c3/28edc38eabd4aa2665d4194284abab75.jpg" 
+                                    class="w-full h-full object-cover transition duration-500 group-hover:scale-110"
+                                    alt="Accesorios"
+                                    onerror="this.src='https://placehold.co/600x800/ffe4e6/9f1239?text=Accesorios'"
+                                >
+                                <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-70"></div>
+                                <div class="absolute bottom-6 left-6 text-white">
+                                    <h3 class="text-2xl font-serif">Accesorios</h3>
+                                    <p class="text-sm text-rose-200">Ver más <i data-lucide="arrow-right" class="inline w-4 h-4"></i></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderShop() {
+            // Helper interno para generar tarjeta (para consistencia visual)
+            const createCard = (product) => `
+                <div class="bg-white rounded-xl shadow-sm hover:shadow-xl transition duration-300 overflow-hidden group fade-in">
+                    <div class="relative h-80 overflow-hidden">
+                        <img 
+                            src="${product.image}" 
+                            alt="${product.name}" 
+                            class="w-full h-full object-cover transition duration-500 group-hover:scale-105"
+                            onerror="this.src='https://placehold.co/600x800/ffe4e6/9f1239?text=${encodeURIComponent(product.name)}'"
+                        >
+                        <button onclick="addToCart(${product.id})" class="absolute bottom-4 right-4 bg-white text-rose-500 p-3 rounded-full shadow-md hover:bg-rose-500 hover:text-white transition transform translate-y-12 opacity-0 group-hover:translate-y-0 group-hover:opacity-100">
+                            <i data-lucide="shopping-cart" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                    <div class="p-4">
+                        <span class="text-xs text-rose-400 font-bold uppercase tracking-wider">${product.category}</span>
+                        <h3 class="font-serif text-lg font-bold text-slate-800 mt-1">${product.name}</h3>
+                        <div class="flex justify-between items-center mt-3">
+                            <span class="text-slate-900 font-bold">$${product.price.toLocaleString()}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            let productsHTML = products.map(createCard).join('');
+
+            return `
+                <div class="max-w-7xl mx-auto px-4 py-8 fade-in">
+                    <div class="text-center mb-12">
+                        <h2 class="text-4xl font-serif font-bold text-slate-800">Nuestra Colección</h2>
+                        <p class="text-slate-500 mt-2">Piezas seleccionadas con amor para ti</p>
+                    </div>
+                    
+                    <!-- Filtros Funcionales -->
+                    <div class="flex flex-wrap justify-center gap-4 mb-10">
+                        <button onclick="filterProducts('Todos', this)" class="filter-btn px-6 py-2 rounded-full bg-rose-500 text-white shadow-md transition border border-rose-500">Todos</button>
+                        <button onclick="filterProducts('Vestidos', this)" class="filter-btn px-6 py-2 rounded-full bg-white text-slate-600 hover:bg-rose-50 transition border border-gray-100">Vestidos</button>
+                        <button onclick="filterProducts('Blusas', this)" class="filter-btn px-6 py-2 rounded-full bg-white text-slate-600 hover:bg-rose-50 transition border border-gray-100">Blusas</button>
+                        <button onclick="filterProducts('Accesorios', this)" class="filter-btn px-6 py-2 rounded-full bg-white text-slate-600 hover:bg-rose-50 transition border border-gray-100">Accesorios</button>
+                        <!-- Categoría 'Otros' para mostrar el resto de productos -->
+                        <button onclick="filterProducts('Otros', this)" class="filter-btn px-6 py-2 rounded-full bg-white text-slate-600 hover:bg-rose-50 transition border border-gray-100">Otros</button>
+                    </div>
+
+                    <div id="shop-products-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 transition-opacity duration-300">
+                        ${productsHTML}
+                    </div>
+                </div>
+            `;
+        }
+
+        // Función para manejar el filtrado
+        function filterProducts(category, btnElement) {
+            // 1. Actualizar estilos de los botones (Visual)
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.className = 'filter-btn px-6 py-2 rounded-full bg-white text-slate-600 hover:bg-rose-50 transition border border-gray-100';
+            });
+            btnElement.className = 'filter-btn px-6 py-2 rounded-full bg-rose-500 text-white shadow-md transition border border-rose-500';
+
+            // 2. Filtrar los datos (Lógica)
+            const filtered = category === 'Todos' 
+                ? products 
+                : category === 'Otros'
+                    ? products.filter(p => !['Vestidos', 'Blusas', 'Accesorios'].includes(p.category))
+                    : products.filter(p => p.category === category);
+
+            // 3. Regenerar el HTML de las tarjetas
+            const createCard = (product) => `
+                <div class="bg-white rounded-xl shadow-sm hover:shadow-xl transition duration-300 overflow-hidden group fade-in">
+                    <div class="relative h-80 overflow-hidden">
+                        <img 
+                            src="${product.image}" 
+                            alt="${product.name}" 
+                            class="w-full h-full object-cover transition duration-500 group-hover:scale-105"
+                            onerror="this.src='https://placehold.co/600x800/ffe4e6/9f1239?text=${encodeURIComponent(product.name)}'"
+                        >
+                        <button onclick="addToCart(${product.id})" class="absolute bottom-4 right-4 bg-white text-rose-500 p-3 rounded-full shadow-md hover:bg-rose-500 hover:text-white transition transform translate-y-12 opacity-0 group-hover:translate-y-0 group-hover:opacity-100">
+                            <i data-lucide="shopping-cart" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                    <div class="p-4">
+                        <span class="text-xs text-rose-400 font-bold uppercase tracking-wider">${product.category}</span>
+                        <h3 class="font-serif text-lg font-bold text-slate-800 mt-1">${product.name}</h3>
+                        <div class="flex justify-between items-center mt-3">
+                            <span class="text-slate-900 font-bold">$${product.price.toLocaleString()}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // 4. Actualizar el DOM con animación
+            const grid = document.getElementById('shop-products-grid');
+            grid.style.opacity = '0'; // Ocultar brevemente
+            
+            setTimeout(() => {
+                if (filtered.length === 0) {
+                     grid.innerHTML = `<div class="col-span-full text-center py-10 text-slate-400 flex flex-col items-center"><i data-lucide="search-x" class="w-12 h-12 mb-2 opacity-50"></i>No hay productos en esta categoría.</div>`;
+                } else {
+                    grid.innerHTML = filtered.map(createCard).join('');
+                }
+                grid.style.opacity = '1'; // Mostrar
+                lucide.createIcons();
+            }, 200);
+        }
+
+        function renderLogin() {
+            return `
+                <div class="flex justify-center items-center min-h-[80vh] px-4 fade-in">
+                    <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border border-rose-100">
+                        <div class="text-center mb-8">
+                            <h2 class="text-3xl font-serif font-bold text-slate-800">Bienvenida</h2>
+                            <p class="text-slate-400">Ingresa a tu cuenta personal</p>
+                        </div>
+                        <form onsubmit="handleLogin(event)" class="space-y-6">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">Email</label>
+                                <input type="email" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-rose-500 outline-none transition" placeholder="tu@email.com">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">Contraseña</label>
+                                <input type="password" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-rose-500 outline-none transition" placeholder="••••••••">
+                            </div>
+                            <button type="submit" class="w-full bg-rose-500 text-white py-3 rounded-lg font-bold hover:bg-rose-600 transition shadow-md">Iniciar Sesión</button>
+                        </form>
+                        <div class="mt-6 text-center text-sm">
+                            <p class="text-slate-500">¿No tienes cuenta? <button onclick="router('register')" class="text-rose-500 font-bold hover:underline">Regístrate aquí</button></p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderRegister() {
+            return `
+                <div class="flex justify-center items-center min-h-[80vh] px-4 fade-in">
+                    <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border border-rose-100">
+                        <div class="text-center mb-8">
+                            <h2 class="text-3xl font-serif font-bold text-slate-800">Crear Cuenta</h2>
+                            <p class="text-slate-400">Únete a la comunidad UrbanClothes</p>
+                        </div>
+                        <form onsubmit="handleRegister(event)" class="space-y-6">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">Nombre Completo</label>
+                                <input type="text" id="reg-name" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-rose-500 outline-none transition" placeholder="Maria Pérez">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">Email</label>
+                                <input type="email" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-rose-500 outline-none transition" placeholder="tu@email.com">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">Contraseña</label>
+                                <input type="password" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-rose-500 outline-none transition" placeholder="Crea una contraseña segura">
+                            </div>
+                            <button type="submit" class="w-full bg-rose-500 text-white py-3 rounded-lg font-bold hover:bg-rose-600 transition shadow-md">Registrarse</button>
+                        </form>
+                        <div class="mt-6 text-center text-sm">
+                            <p class="text-slate-500">¿Ya tienes cuenta? <button onclick="router('login')" class="text-rose-500 font-bold hover:underline">Inicia sesión</button></p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderProfile() {
+            return `
+                <div class="max-w-4xl mx-auto px-4 py-12 fade-in">
+                    <div class="bg-white rounded-2xl shadow-lg overflow-hidden border border-rose-50">
+                        <!-- Banner -->
+                        <div class="bg-rose-500 h-32 w-full"></div>
+                        
+                        <div class="px-8 pb-8">
+                            <!-- Header del Perfil con Flexbox para evitar superposiciones -->
+                            <div class="flex flex-col md:flex-row items-center md:items-end gap-6 -mt-16 mb-6">
+                                <!-- Avatar -->
+                                <div class="relative flex-shrink-0">
+                                    <div class="p-1.5 bg-white rounded-full shadow-sm">
+                                        <img src="https://api.dicebear.com/7.x/micah/svg?seed=${state.user.name}&backgroundColor=ffd5dc" class="w-32 h-32 rounded-full border-4 border-white bg-rose-100 object-cover">
+                                    </div>
+                                </div>
+                                
+                                <!-- Información del Usuario -->
+                                <div class="flex-1 text-center md:text-left pt-2 md:pt-0 md:pb-2">
+                                    <h1 class="text-3xl font-serif font-bold text-slate-800 leading-tight">${state.user.name}</h1>
+                                    <p class="text-slate-500 font-medium mt-1">Miembro desde Diciembre 2025</p>
+                                </div>
+
+                                <!-- Botón de Acción -->
+                                <div class="md:pb-4">
+                                    <button onclick="logout()" class="px-6 py-2 border border-rose-200 text-rose-500 rounded-lg hover:bg-rose-50 transition flex items-center gap-2 font-medium">
+                                        <i data-lucide="log-out" class="w-4 h-4"></i>
+                                        <span>Cerrar Sesión</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <hr class="my-6 border-gray-100">
+
+                            <!-- Detalles y Contenido -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div>
+                                    <h3 class="text-xl font-bold mb-4 flex items-center gap-2"><i data-lucide="user" class="w-5 h-5 text-rose-500"></i> Datos Personales</h3>
+                                    <div class="bg-gray-50 p-5 rounded-xl space-y-3 text-sm text-slate-600 border border-gray-100">
+                                        <p class="flex items-center gap-3"><i data-lucide="mail" class="w-4 h-4 text-rose-400"></i> ${state.user.email || 'usuario@ejemplo.com'}</p>
+                                        <p class="flex items-center gap-3"><i data-lucide="map-pin" class="w-4 h-4 text-rose-400"></i> Calle Ficticia 123, Ciudad Moda</p>
+                                        <p class="flex items-center gap-3"><i data-lucide="phone" class="w-4 h-4 text-rose-400"></i> +56 9 1234 5678</p>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h3 class="text-xl font-bold mb-4 flex items-center gap-2"><i data-lucide="package" class="w-5 h-5 text-rose-500"></i> Historial de Pedidos</h3>
+                                    <div class="space-y-3">
+                                        <!-- Pedido Simulado -->
+                                        <div class="flex justify-between items-center bg-gray-50 p-4 rounded-xl border-l-4 border-green-400 shadow-sm hover:shadow-md transition">
+                                            <div>
+                                                <p class="font-bold text-slate-800">Orden #8392</p>
+                                                <p class="text-xs text-slate-500">Entregado el 12 Oct</p>
+                                            </div>
+                                            <span class="font-bold text-slate-700">$85,000</span>
+                                        </div>
+                                         <div class="flex justify-between items-center bg-gray-50 p-4 rounded-xl border-l-4 border-rose-400 shadow-sm hover:shadow-md transition">
+                                            <div>
+                                                <p class="font-bold text-slate-800">Orden #9921</p>
+                                                <p class="text-xs text-slate-500">En tránsito</p>
+                                            </div>
+                                            <span class="font-bold text-slate-700">$32,500</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderCheckout() {
+            if (state.cart.length === 0) {
+                return `
+                <div class="flex flex-col items-center justify-center min-h-[60vh] fade-in">
+                    <i data-lucide="shopping-bag" class="w-20 h-20 text-gray-300 mb-4"></i>
+                    <h2 class="text-2xl font-bold text-slate-600 mb-4">No hay nada que pagar</h2>
+                    <button onclick="router('shop')" class="bg-rose-500 text-white px-6 py-2 rounded-full hover:bg-rose-600">Ir a la tienda</button>
+                </div>`;
+            }
+
+            const total = state.cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+
+            return `
+                <div class="max-w-6xl mx-auto px-4 py-12 fade-in">
+                    <h1 class="text-3xl font-serif font-bold text-slate-800 mb-8 text-center">Finalizar Compra</h1>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                        <!-- Formulario de Pago -->
+                        <div class="space-y-6">
+                            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                                <h3 class="text-lg font-bold mb-4 flex items-center gap-2"><i data-lucide="credit-card" class="text-rose-500"></i> Método de Pago</h3>
+                                <form id="payment-form" onsubmit="handlePayment(event)" class="space-y-4">
+                                    <div>
+                                        <label class="block text-xs uppercase text-slate-500 font-bold mb-1">Nombre en la tarjeta</label>
+                                        <input type="text" required class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-rose-500 transition" placeholder="Como aparece en la tarjeta">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs uppercase text-slate-500 font-bold mb-1">Número de tarjeta</label>
+                                        <div class="relative">
+                                            <input type="text" maxlength="19" required class="w-full p-3 pl-10 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-rose-500 transition" placeholder="0000 0000 0000 0000">
+                                            <i data-lucide="credit-card" class="absolute left-3 top-3.5 w-5 h-5 text-gray-400"></i>
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-xs uppercase text-slate-500 font-bold mb-1">Expiración</label>
+                                            <input type="text" maxlength="5" required class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-rose-500 transition" placeholder="MM/YY">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs uppercase text-slate-500 font-bold mb-1">CVV</label>
+                                            <input type="text" maxlength="3" required class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-rose-500 transition" placeholder="123">
+                                        </div>
+                                    </div>
+                                    <button type="submit" id="pay-btn" class="w-full mt-4 bg-slate-900 text-white py-4 rounded-lg font-bold hover:bg-rose-600 transition shadow-lg flex justify-center items-center gap-2">
+                                        <span>Pagar $${total.toLocaleString()}</span>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Resumen -->
+                        <div class="bg-rose-50 p-6 rounded-xl h-fit">
+                            <h3 class="text-lg font-bold mb-4 text-rose-800">Resumen del Pedido</h3>
+                            <div class="space-y-4 mb-6 max-h-60 overflow-y-auto pr-2 custom-scroll">
+                                ${state.cart.map(item => `
+                                    <div class="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm">
+                                        <div class="flex items-center gap-3">
+                                            <img src="${item.image}" class="w-12 h-12 rounded object-cover">
+                                            <div>
+                                                <p class="text-sm font-bold text-slate-800">${item.name}</p>
+                                                <p class="text-xs text-slate-500">Cant: ${item.quantity}</p>
+                                            </div>
+                                        </div>
+                                        <span class="font-bold text-sm">$${(item.price * item.quantity).toLocaleString()}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                            <div class="border-t border-rose-200 pt-4 space-y-2">
+                                <div class="flex justify-between text-slate-600">
+                                    <span>Subtotal</span>
+                                    <span>$${total.toLocaleString()}</span>
+                                </div>
+                                <div class="flex justify-between text-slate-600">
+                                    <span>Envío</span>
+                                    <span class="text-green-600 font-bold">Gratis</span>
+                                </div>
+                                <div class="flex justify-between text-xl font-bold text-slate-900 pt-2">
+                                    <span>Total</span>
+                                    <span>$${total.toLocaleString()}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modal de Boleta Electrónica -->
+                <div id="receipt-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 hidden backdrop-blur-sm p-4">
+                    <div class="bg-white rounded-lg shadow-2xl w-full max-w-md overflow-hidden fade-in flex flex-col max-h-[90vh] relative">
+                        <!-- Cabecera estilo Ticket -->
+                        <div class="bg-slate-900 text-white p-6 text-center relative border-b-2 border-dashed border-slate-700">
+                             <div class="absolute -bottom-6 left-1/2 transform -translate-x-1/2 bg-green-500 rounded-full p-2 border-4 border-white shadow-sm z-10">
+                                <i data-lucide="check" class="w-6 h-6 text-white"></i>
+                             </div>
+                             <h2 class="text-xl font-serif font-bold tracking-widest uppercase">Boleta Electrónica</h2>
+                             <p class="text-slate-400 text-xs mt-1">UrbanClothes SPA</p>
+                             <p class="text-slate-500 text-[10px]">RUT: 76.123.456-K</p>
+                        </div>
+                        
+                        <!-- Cuerpo del Ticket -->
+                        <div class="p-8 pt-10 overflow-y-auto bg-white">
+                            <div class="flex justify-between items-end mb-6 border-b border-gray-100 pb-4">
+                                 <div>
+                                    <p class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Orden de Compra</p>
+                                    <p class="text-lg font-mono font-bold text-slate-800" id="receipt-order-id">#Cargando...</p>
+                                 </div>
+                                 <div class="text-right">
+                                    <p class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Fecha</p>
+                                    <p class="text-sm font-bold text-slate-800" id="receipt-date">--/--/--</p>
+                                 </div>
+                            </div>
+                
+                             <div class="mb-4">
+                                <p class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-2">Cliente</p>
+                                <p class="text-sm font-medium text-slate-700">${state.user ? state.user.name : 'Cliente Invitado'}</p>
+                             </div>
+
+                            <!-- Lista de Items -->
+                            <div class="space-y-3 mb-6" id="receipt-items">
+                                <!-- Se llena con JS -->
+                            </div>
+
+                            <!-- Totales -->
+                             <div class="border-t-2 border-dashed border-gray-200 pt-4 space-y-1">
+                                <div class="flex justify-between text-xs text-slate-500">
+                                    <span>Neto</span>
+                                    <span id="receipt-neto">$0</span>
+                                </div>
+                                <div class="flex justify-between text-xs text-slate-500">
+                                    <span>IVA (19%)</span>
+                                    <span id="receipt-iva">$0</span>
+                                </div>
+                                <div class="flex justify-between items-center mt-2 pt-2 border-t border-gray-100">
+                                    <span class="font-bold text-slate-800">TOTAL</span>
+                                    <span class="text-xl font-bold text-rose-600" id="receipt-total">$0</span>
+                                </div>
+                             </div>
+                        </div>
+                        
+                        <!-- Footer Actions -->
+                        <div class="p-4 bg-gray-50 border-t border-gray-100">
+                            <button onclick="closeReceipt()" class="w-full bg-slate-900 text-white py-3 rounded-lg font-bold hover:bg-slate-800 transition shadow-lg flex justify-center items-center gap-2">
+                                <span>Finalizar y Salir</span>
+                                <i data-lucide="log-out" class="w-4 h-4"></i>
+                            </button>
+                            <p class="text-center text-[10px] text-slate-400 mt-3">Gracias por preferir UrbanClothes</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderAbout() {
+            return `
+                <div class="max-w-5xl mx-auto px-4 py-16 fade-in text-center">
+                    <h2 class="text-4xl font-serif font-bold text-slate-800 mb-6">Nuestra Esencia</h2>
+                    <p class="text-xl text-slate-500 mb-12 max-w-2xl mx-auto">En UrbanClothes, creemos que la moda no es solo ropa, es una extensión de tu personalidad. </p>
+                    <div class="grid md:grid-cols-3 gap-8">
+                        <div class="p-6 bg-white rounded-xl shadow-md">
+                            <div class="w-12 h-12 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-4 text-rose-500">
+                                <i data-lucide="heart"></i>
+                            </div>
+                            <h3 class="font-bold text-lg mb-2">Pasión por el Detalle</h3>
+                            <p class="text-sm text-slate-500">Cada costura cuenta una historia de dedicación.</p>
+                        </div>
+                        <div class="p-6 bg-white rounded-xl shadow-md">
+                            <div class="w-12 h-12 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-4 text-rose-500">
+                                <i data-lucide="star"></i>
+                            </div>
+                            <h3 class="font-bold text-lg mb-2">Calidad Premium</h3>
+                            <p class="text-sm text-slate-500">Materiales seleccionados para durar y brillar.</p>
+                        </div>
+                        <div class="p-6 bg-white rounded-xl shadow-md">
+                            <div class="w-12 h-12 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-4 text-rose-500">
+                                <i data-lucide="sun"></i>
+                            </div>
+                            <h3 class="font-bold text-lg mb-2">Sostenibilidad</h3>
+                            <p class="text-sm text-slate-500">Comprometidos con un futuro más verde y ético.</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+
+        // --- FUNCIONES LÓGICAS ---
+
+        function updateAuthUI() {
+            const authSection = document.getElementById('auth-section');
+            const mobileAuth = document.querySelector('.auth-required');
+            
+            if (state.user) {
+                authSection.innerHTML = `
+                    <div onclick="router('profile')" class="cursor-pointer flex items-center gap-2 hover:bg-rose-50 p-2 rounded-lg transition">
+                        <img src="https://api.dicebear.com/7.x/micah/svg?seed=${state.user.name}&backgroundColor=ffd5dc" class="w-8 h-8 rounded-full border border-rose-200">
+                        <span class="text-sm font-medium text-slate-700 hidden md:block">${state.user.name.split(' ')[0]}</span>
+                    </div>
+                `;
+                if(mobileAuth) mobileAuth.classList.remove('hidden');
+            } else {
+                authSection.innerHTML = `
+                    <button onclick="router('login')" class="text-slate-600 hover:text-rose-500 font-medium text-sm border border-slate-200 px-4 py-1.5 rounded-full hover:border-rose-300 transition">
+                        Ingresar
+                    </button>
+                `;
+                if(mobileAuth) mobileAuth.classList.add('hidden');
+            }
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            // Simulación simple
+            state.user = { name: "Sofía Modelo", email: "sofia@example.com" };
+            showNotification("¡Bienvenida de nuevo, Sofía!", "success");
+            updateAuthUI();
+            router('home');
+        }
+
+        function handleRegister(e) {
+            e.preventDefault();
+            const name = document.getElementById('reg-name').value;
+            state.user = { name: name, email: "nuevo@example.com" };
+            showNotification("¡Cuenta creada exitosamente!", "success");
+            updateAuthUI();
+            router('home');
+        }
+
+        function logout() {
+            state.user = null;
+            showNotification("Has cerrado sesión", "info");
+            updateAuthUI();
+            router('home');
+        }
+
+        function toggleCart() {
+            const sidebar = document.getElementById('cart-sidebar');
+            const panel = document.getElementById('cart-panel');
+            
+            if (sidebar.classList.contains('hidden')) {
+                sidebar.classList.remove('hidden');
+                setTimeout(() => {
+                    panel.classList.remove('translate-x-full');
+                }, 10);
+            } else {
+                panel.classList.add('translate-x-full');
+                setTimeout(() => {
+                    sidebar.classList.add('hidden');
+                }, 300);
+            }
+        }
+
+        function addToCart(productId) {
+            const product = products.find(p => p.id === productId);
+            const existingItem = state.cart.find(item => item.id === productId);
+
+            if (existingItem) {
+                existingItem.quantity += 1;
+            } else {
+                state.cart.push({ ...product, quantity: 1 });
+            }
+
+            updateCartUI();
+            showNotification(`${product.name} agregado al carrito`, "success");
+            
+            // Efecto visual en el icono
+            const cartIcon = document.getElementById('cart-count');
+            cartIcon.classList.add('scale-125');
+            setTimeout(() => cartIcon.classList.remove('scale-125'), 200);
+        }
+
+        function removeFromCart(productId) {
+            state.cart = state.cart.filter(item => item.id !== productId);
+            updateCartUI();
+        }
+
+        function updateCartUI() {
+            const cartItemsContainer = document.getElementById('cart-items');
+            const cartCount = document.getElementById('cart-count');
+            const cartTotal = document.getElementById('cart-total');
+
+            // Actualizar contador
+            const totalItems = state.cart.reduce((acc, item) => acc + item.quantity, 0);
+            cartCount.innerText = totalItems;
+            
+            // Animación de burbuja
+            if (totalItems > 0) {
+                cartCount.classList.remove('scale-0');
+            } else {
+                cartCount.classList.add('scale-0');
+            }
+
+            // Actualizar lista visual
+            if (state.cart.length === 0) {
+                cartItemsContainer.innerHTML = `
+                    <div class="text-center text-slate-400 mt-10">
+                        <i data-lucide="shopping-bag" class="w-16 h-16 mx-auto mb-4 opacity-50"></i>
+                        <p>Tu bolsa está vacía.</p>
+                        <button onclick="toggleCart(); router('shop')" class="mt-4 text-rose-500 font-bold underline">Ir a comprar</button>
+                    </div>
+                `;
+            } else {
+                cartItemsContainer.innerHTML = state.cart.map(item => `
+                    <div class="flex items-center gap-4 bg-white p-3 rounded-lg shadow-sm border border-gray-50">
+                        <img src="${item.image}" class="w-16 h-16 rounded-md object-cover">
+                        <div class="flex-1">
+                            <h4 class="font-bold text-slate-800 text-sm">${item.name}</h4>
+                            <p class="text-rose-500 font-bold text-sm">$${item.price.toLocaleString()}</p>
+                            <div class="text-xs text-slate-400 mt-1">Cant: ${item.quantity}</div>
+                        </div>
+                        <button onclick="removeFromCart(${item.id})" class="text-slate-300 hover:text-red-500 transition p-2">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                `).join('');
+            }
+
+            // Actualizar Total
+            const totalAmount = state.cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+            cartTotal.innerText = `$${totalAmount.toLocaleString()}`;
+
+            lucide.createIcons();
+        }
+
+        function checkout() {
+            toggleCart();
+            if (!state.user) {
+                showNotification("Debes iniciar sesión para pagar", "info");
+                router('login');
+            } else if (state.cart.length === 0) {
+                showNotification("Tu carrito está vacío", "error");
+            } else {
+                router('checkout');
+            }
+        }
+
+        function handlePayment(e) {
+            e.preventDefault();
+            const btn = document.getElementById('pay-btn');
+            
+            // Simular carga
+            btn.disabled = true;
+            btn.innerHTML = `<div class="loader w-5 h-5 border-white border-t-transparent"></div> Generando Boleta...`;
+            
+            setTimeout(() => {
+                // Generar Datos de la Boleta
+                const orderId = 'ORD-' + Math.floor(100000 + Math.random() * 900000);
+                const now = new Date();
+                const dateStr = now.toLocaleDateString('es-CL') + ' ' + now.toLocaleTimeString('es-CL', {hour: '2-digit', minute:'2-digit'});
+                const total = state.cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+                const neto = Math.round(total / 1.19);
+                const iva = total - neto;
+
+                // Llenar el DOM
+                document.getElementById('receipt-order-id').innerText = orderId;
+                document.getElementById('receipt-date').innerText = dateStr;
+                document.getElementById('receipt-total').innerText = '$' + total.toLocaleString();
+                document.getElementById('receipt-neto').innerText = '$' + neto.toLocaleString();
+                document.getElementById('receipt-iva').innerText = '$' + iva.toLocaleString();
+
+                const itemsContainer = document.getElementById('receipt-items');
+                itemsContainer.innerHTML = state.cart.map(item => `
+                    <div class="flex justify-between text-sm">
+                        <span class="text-slate-600 truncate w-2/3"><span class="font-bold text-slate-800">x${item.quantity}</span> ${item.name}</span>
+                        <span class="font-medium text-slate-800">$${(item.price * item.quantity).toLocaleString()}</span>
+                    </div>
+                `).join('');
+
+                // Mostrar Modal
+                document.getElementById('receipt-modal').classList.remove('hidden');
+                lucide.createIcons(); // refrescar iconos
+            }, 2000);
+        }
+
+        function closeReceipt() {
+            state.cart = [];
+            updateCartUI();
+            router('home');
+        }
+
+        function showNotification(message, type = 'info') {
+            const container = document.getElementById('notification-container');
+            const notif = document.createElement('div');
+            
+            const colors = {
+                success: 'bg-green-500',
+                error: 'bg-red-500',
+                info: 'bg-slate-800'
+            };
+
+            const icons = {
+                success: 'check-circle',
+                error: 'alert-circle',
+                info: 'info'
+            };
+
+            notif.className = `${colors[type]} text-white px-6 py-4 rounded-lg shadow-xl flex items-center gap-3 transform transition-all duration-300 translate-x-10 opacity-0 min-w-[300px]`;
+            notif.innerHTML = `
+                <i data-lucide="${icons[type]}" class="w-5 h-5"></i>
+                <span class="font-medium">${message}</span>
+            `;
+
+            container.appendChild(notif);
+            lucide.createIcons();
+
+            // Animación Entrada
+            setTimeout(() => {
+                notif.classList.remove('translate-x-10', 'opacity-0');
+            }, 10);
+
+            // Animación Salida
+            setTimeout(() => {
+                notif.classList.add('translate-x-10', 'opacity-0');
+                setTimeout(() => notif.remove(), 300);
+            }, 3000);
+        }
+
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
+        }
+
+    </script>
+</body>
+</html>
